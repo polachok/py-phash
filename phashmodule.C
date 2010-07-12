@@ -3,12 +3,14 @@
 
 static PyObject *pHashError;
 
-static PyObject *
-phash_imagehash(PyObject *self, PyObject *args);
+static PyObject * phash_imagehash(PyObject *self, PyObject *args);
+static PyObject * phash_hamming_distance(PyObject *self, PyObject *args);
 
 static PyMethodDef pHashMethods[] = {
     { "imagehash", phash_imagehash, METH_VARARGS,
 	"Compute a DCT hash." },
+    { "hamming_distance", phash_hamming_distance, METH_VARARGS,
+	"Compute distance." },
     { NULL, NULL, NULL}
 };
 
@@ -33,6 +35,19 @@ phash_imagehash(PyObject *self, PyObject *args) {
     if(!PyArg_ParseTuple(args, "s", &filename))
 	return NULL;
     ph_dct_imagehash(filename, hash);
-    //return Py_BuildValue("i", hash);
     return PyLong_FromUnsignedLongLong(hash);
+}
+
+static PyObject *
+phash_hamming_distance(PyObject *self, PyObject *args) {
+    ulong64 hash1, hash2;
+    PyObject *py_hash1, *py_hash2;
+    int ret;
+
+    if(!PyArg_ParseTuple(args, "OO", &py_hash1, &py_hash2))
+	    return NULL;
+    hash1 = PyLong_AsUnsignedLongLong(py_hash1);
+    hash2 = PyLong_AsUnsignedLongLong(py_hash2);
+    ret = ph_hamming_distance(hash1, hash2);
+    return Py_BuildValue("i", ret);
 }
