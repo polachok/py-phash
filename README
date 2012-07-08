@@ -1,6 +1,0 @@
-Python bindings for libpHash (http://phash.org/)
-
-INSTALL
--------
-
-python setup.py install
