@@ -6,9 +6,9 @@ static PyObject *pHashError;
 
 typedef struct pHashDigest {
 	PyObject_HEAD
-	PyObject *id;				//hash id
+		PyObject *id;				//hash id
 	PyObject *coeffs;           //the head of the digest integer coefficient array
-    int size;
+	int size;
 } pHashDigest;
 
 static PyObject * phash_imagehash(PyObject *self, PyObject *args);
@@ -17,15 +17,15 @@ static PyObject * phash_hamming_distance(PyObject *self, PyObject *args);
 static PyObject * phash_crosscorr(PyObject *self, PyObject *args);
 
 static PyMethodDef pHashMethods[] = {
-    { "imagehash", phash_imagehash, METH_VARARGS,
-	"Compute a DCT hash." },
-    { "image_digest", phash_image_digest, METH_VARARGS,
-	"Compute a radial hash." },
-    { "hamming_distance", phash_hamming_distance, METH_VARARGS,
-	"Compute distance." },
-    { "crosscorr", phash_crosscorr, METH_VARARGS,
-	"Compute radial cross correlation." },
-    { NULL, NULL, NULL}
+	{ "imagehash", phash_imagehash, METH_VARARGS,
+		"Compute a DCT hash." },
+	{ "image_digest", phash_image_digest, METH_VARARGS,
+		"Compute a radial hash." },
+	{ "hamming_distance", phash_hamming_distance, METH_VARARGS,
+		"Compute distance." },
+	{ "crosscorr", phash_crosscorr, METH_VARARGS,
+		"Compute radial cross correlation." },
+	{ NULL, NULL, NULL}
 };
 
 static PyTypeObject pHashDigestType = {
@@ -33,24 +33,24 @@ static PyTypeObject pHashDigestType = {
 };
 
 static PyMemberDef pHashDigest_members[] = {
-		{"id", T_STRING, offsetof(pHashDigest, id), 0, "id"},
-		{"coeffs", T_OBJECT, offsetof(pHashDigest, coeffs), 0, "coeffs"},
-		{"size", T_INT, offsetof(pHashDigest, size), 0, "size"},
-		{NULL}
-	};
+	{"id", T_STRING, offsetof(pHashDigest, id), 0, "id"},
+	{"coeffs", T_OBJECT, offsetof(pHashDigest, coeffs), 0, "coeffs"},
+	{"size", T_INT, offsetof(pHashDigest, size), 0, "size"},
+	{NULL}
+};
 
 PyMODINIT_FUNC
 initpHash(void) {
-    PyObject *m;
+	PyObject *m;
 	PyObject *coeffs;
 
-    m = Py_InitModule("pHash", pHashMethods);
-    if(m == NULL)
-	return;
+	m = Py_InitModule("pHash", pHashMethods);
+	if(m == NULL)
+		return;
 
-    pHashError = PyErr_NewException("pHash.error", NULL, NULL);
-    Py_INCREF(pHashError);
-    PyModule_AddObject(m, "error", pHashError);
+	pHashError = PyErr_NewException("pHash.error", NULL, NULL);
+	Py_INCREF(pHashError);
+	PyModule_AddObject(m, "error", pHashError);
 
 	pHashDigestType.tp_name = "pHash.Digest";
 	pHashDigestType.tp_basicsize = sizeof(pHashDigest);
@@ -68,13 +68,13 @@ initpHash(void) {
 
 static PyObject *
 phash_imagehash(PyObject *self, PyObject *args) {
-    const char *filename;
-    ulong64 hash = 0;
+	const char *filename;
+	ulong64 hash = 0;
 
-    if(!PyArg_ParseTuple(args, "s", &filename))
-        return NULL;
-    ph_dct_imagehash(filename, hash);
-    return PyLong_FromUnsignedLongLong(hash);
+	if(!PyArg_ParseTuple(args, "s", &filename))
+		return NULL;
+	ph_dct_imagehash(filename, hash);
+	return PyLong_FromUnsignedLongLong(hash);
 }
 
 static PyObject *
@@ -87,7 +87,7 @@ phash_image_digest(PyObject *self, PyObject *args) {
 	pHashDigest *phdig;
 
 	if(!PyArg_ParseTuple(args, "sdd|i:", &filename, &sigma, &gamma, &N))
-        return NULL;
+		return NULL;
 
 	ph_image_digest(filename, sigma, gamma, dig, N);
 
@@ -108,16 +108,16 @@ phash_image_digest(PyObject *self, PyObject *args) {
 
 static PyObject *
 phash_hamming_distance(PyObject *self, PyObject *args) {
-    ulong64 hash1, hash2;
-    PyObject *py_hash1, *py_hash2;
-    int ret;
+	ulong64 hash1, hash2;
+	PyObject *py_hash1, *py_hash2;
+	int ret;
 
-    if(!PyArg_ParseTuple(args, "OO", &py_hash1, &py_hash2))
-	    return NULL;
-    hash1 = PyLong_AsUnsignedLongLong(py_hash1);
-    hash2 = PyLong_AsUnsignedLongLong(py_hash2);
-    ret = ph_hamming_distance(hash1, hash2);
-    return Py_BuildValue("i", ret);
+	if(!PyArg_ParseTuple(args, "OO", &py_hash1, &py_hash2))
+		return NULL;
+	hash1 = PyLong_AsUnsignedLongLong(py_hash1);
+	hash2 = PyLong_AsUnsignedLongLong(py_hash2);
+	ret = ph_hamming_distance(hash1, hash2);
+	return Py_BuildValue("i", ret);
 }
 
 static PyObject *
@@ -161,6 +161,6 @@ phash_crosscorr(PyObject *self, PyObject *args) {
 
 	free(coeffs1);
 	free(coeffs2);
-	
+
 	return Py_BuildValue("i", ret);
 }
