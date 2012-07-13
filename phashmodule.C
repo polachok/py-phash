@@ -55,7 +55,7 @@ initpHash(void) {
 	pHashDigestType.tp_name = "pHash.Digest";
 	pHashDigestType.tp_basicsize = sizeof(pHashDigest);
 	pHashDigestType.tp_new = PyType_GenericNew;
-	pHashDigestType.tp_methods = { NULL };
+	pHashDigestType.tp_methods = NULL;
 	pHashDigestType.tp_members = pHashDigest_members;
 	pHashDigestType.tp_flags = Py_TPFLAGS_DEFAULT;
 	pHashDigestType.tp_doc = "A pHash radial digest object";
