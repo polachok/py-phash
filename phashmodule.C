@@ -109,13 +109,10 @@ phash_image_digest(PyObject *self, PyObject *args) {
 static PyObject *
 phash_hamming_distance(PyObject *self, PyObject *args) {
 	ulong64 hash1, hash2;
-	PyObject *py_hash1, *py_hash2;
 	int ret;
 
-	if(!PyArg_ParseTuple(args, "OO", &py_hash1, &py_hash2))
+	if(!PyArg_ParseTuple(args, "KK", &hash1, &hash2))
 		return NULL;
-	hash1 = PyLong_AsUnsignedLongLong(py_hash1);
-	hash2 = PyLong_AsUnsignedLongLong(py_hash2);
 	ret = ph_hamming_distance(hash1, hash2);
 	return Py_BuildValue("i", ret);
 }
