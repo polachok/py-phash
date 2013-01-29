@@ -26,11 +26,11 @@ Radial hash
 import pHash
 hash1 = pHash.imagehash( 'file.1.jpg' )
 hash2 = pHash.imagehash( 'file.2.jpg' )
-print 'Hamming distance: %d (%08x / %08x)' % ( pHash.hamming_distance( hash1, hash2 ), hash1, hash2 )
+print( 'Hamming distance: %d (%08x / %08x)' % ( pHash.hamming_distance( hash1, hash2 ), hash1, hash2 ))
 
 digest1 = pHash.image_digest( 'file.1.jpg', 1.0, 1.0, 180 )
 digest2 = pHash.image_digest( 'file.2.jpg', 1.0, 1.0, 180 )
-print 'Cross-correelation: %d' % ( pHash.crosscorr( digest1, digest2 ) )
+print( 'Cross-correelation: %d' % ( pHash.crosscorr( digest1, digest2 ) ) )
 ````
 
 Todo
