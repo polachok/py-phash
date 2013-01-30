@@ -10,6 +10,8 @@ Installation
 
 python setup.py install
 
+(for python 3 checkout python3 branch)
+
 Usage
 -----
 
@@ -39,3 +41,4 @@ Todo
 - Return peak cross-correlation for radial hashing
 - Add audio and video support
 - Beautify the code, add comments
+- Unify with python 3 branch
