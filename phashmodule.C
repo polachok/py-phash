@@ -2,7 +2,10 @@
 #include <structmember.h>
 #include <pHash.h>
 
-static PyObject *pHashError;
+struct module_state {
+    PyObject *error;
+};
+
 
 typedef struct pHashDigest {
 	PyObject_HEAD
@@ -25,34 +28,57 @@ static PyMethodDef pHashMethods[] = {
 		"Compute distance." },
 	{ "crosscorr", phash_crosscorr, METH_VARARGS,
 		"Compute radial cross correlation." },
-	{ NULL, NULL, NULL}
+    { NULL, NULL, 0, NULL}
 };
 
-static PyTypeObject pHashDigestType = {
-	PyObject_HEAD_INIT(NULL)
-};
+static PyTypeObject pHashDigestType = { { PyObject_HEAD_INIT(NULL) } };
 
 static PyMemberDef pHashDigest_members[] = {
 	{"id", T_STRING, offsetof(pHashDigest, id), 0, "id"},
 	{"coeffs", T_OBJECT, offsetof(pHashDigest, coeffs), 0, "coeffs"},
 	{"size", T_INT, offsetof(pHashDigest, size), 0, "size"},
-	{NULL}
+    {NULL, 0, 0, 0, NULL}
 };
 
+static int pHash_traverse(PyObject *m, visitproc visit, void *arg) {
+    Py_VISIT(((struct module_state*)PyModule_GetState(m))->error);
+    return 0;
+}
+
+static int pHash_clear(PyObject *m) {
+    Py_CLEAR(((struct module_state*)PyModule_GetState(m))->error);
+    return 0;
+}
+
+
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "pHash",
+        NULL,
+        sizeof(struct module_state),
+        pHashMethods,
+        NULL, // reload
+        pHash_traverse, // traverse
+        pHash_clear, // clear
+        NULL  // free
+};
+
+
 PyMODINIT_FUNC
-initpHash(void) {
+PyInit_pHash(void) {
 	PyObject *m;
 	PyObject *coeffs;
 
-	m = Py_InitModule("pHash", pHashMethods);
+	m = PyModule_Create(&moduledef);
+
 	if(m == NULL)
-		return;
+		return m;
 
-	pHashError = PyErr_NewException("pHash.error", NULL, NULL);
-	Py_INCREF(pHashError);
-	PyModule_AddObject(m, "error", pHashError);
+    ((struct module_state*)PyModule_GetState(m))->error = PyErr_NewException("pHash.error", NULL, NULL);
+    Py_INCREF(((struct module_state*)PyModule_GetState(m))->error);
+    PyModule_AddObject(m, "error", ((struct module_state*)PyModule_GetState(m))->error);
 
-	pHashDigestType.tp_name = "pHash.Digest";
+    pHashDigestType.tp_name = "pHash.Digest";
 	pHashDigestType.tp_basicsize = sizeof(pHashDigest);
 	pHashDigestType.tp_new = PyType_GenericNew;
 	pHashDigestType.tp_methods = NULL;
@@ -64,6 +90,8 @@ initpHash(void) {
 
 	Py_INCREF(&pHashDigestType);
 	PyModule_AddObject(m, "Digest", (PyObject *)&pHashDigestType);
+
+    return m;
 }
 
 static PyObject *
