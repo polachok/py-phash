@@ -159,5 +159,5 @@ phash_crosscorr(PyObject *self, PyObject *args) {
 	free(coeffs1);
 	free(coeffs2);
 
-	return Py_BuildValue("i", ret);
+	return Py_BuildValue("(i,d)", ret, pcc);
 }
