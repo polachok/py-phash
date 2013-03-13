@@ -11,18 +11,30 @@ typedef struct pHashDigest {
 	int size;
 } pHashDigest;
 
+static PyObject * PyList_FromUint8Array(uint8_t *array, int len);
+static uint8_t* arrayFromPyList(PyObject* pyList);
+
+static PyObject * phash_compare_images(PyObject *self, PyObject *args);
 static PyObject * phash_imagehash(PyObject *self, PyObject *args);
+static PyObject * phash_mh_imagehash(PyObject *self, PyObject *args);
 static PyObject * phash_image_digest(PyObject *self, PyObject *args);
 static PyObject * phash_hamming_distance(PyObject *self, PyObject *args);
+static PyObject * phash_hamming_distance2(PyObject *self, PyObject *args);
 static PyObject * phash_crosscorr(PyObject *self, PyObject *args);
 
 static PyMethodDef pHashMethods[] = {
+	{ "compare_images", phash_compare_images, METH_VARARGS,
+		"Compare 2 images." },
 	{ "imagehash", phash_imagehash, METH_VARARGS,
 		"Compute a DCT hash." },
+	{ "mh_imagehash", phash_mh_imagehash, METH_VARARGS,
+		"Compute a Mexican Hat hash"},
 	{ "image_digest", phash_image_digest, METH_VARARGS,
 		"Compute a radial hash." },
 	{ "hamming_distance", phash_hamming_distance, METH_VARARGS,
 		"Compute distance." },
+	{ "hamming_distance2", phash_hamming_distance2, METH_VARARGS,
+		"Compute hamming distance between two byte arrays (Mexican hat)." },
 	{ "crosscorr", phash_crosscorr, METH_VARARGS,
 		"Compute radial cross correlation." },
 	{ NULL, NULL, NULL}
@@ -38,6 +50,50 @@ static PyMemberDef pHashDigest_members[] = {
 	{"size", T_INT, offsetof(pHashDigest, size), 0, "size"},
 	{NULL}
 };
+
+/* Return a new PyList from a byte array (uint8_t / unsigned char array) */
+static PyObject * PyList_FromUint8Array(uint8_t *array, int len) {
+    PyObject *pyList;
+    int i;
+    
+    if (len < 0)
+        return NULL;
+
+    pyList = PyList_New(len);
+
+    for (i = 0; i < len; i++) {
+        PyObject *item = PyInt_FromLong((long) array[i]);
+
+        PyList_SetItem(pyList, i, item);
+    }
+
+    return pyList;
+}
+
+/* Returns a byte (uint8_t) array from a PyList */
+static uint8_t* arrayFromPyList(PyObject* pyList) {
+    uint8_t *newarr = NULL;
+    Py_ssize_t i;
+    Py_ssize_t len;
+
+    if (!pyList)
+        return NULL;
+
+    len = PyList_Size(pyList);
+    if (len < 0)
+        return NULL;
+
+    newarr = (uint8_t*) malloc(len * sizeof(uint8_t));
+
+    if (!newarr)
+        return NULL;
+
+    for (i = 0; i < len; i++) {
+        newarr[i] = (uint8_t) PyInt_AsLong(PyList_GetItem(pyList, i));
+    }
+
+    return newarr;
+}
 
 PyMODINIT_FUNC
 initpHash(void) {
@@ -67,6 +123,20 @@ initpHash(void) {
 }
 
 static PyObject *
+phash_compare_images(PyObject *self, PyObject *args) {
+    const char *file1;
+    const char *file2;
+	double pcc = 0.0;
+
+	if(!PyArg_ParseTuple(args, "ss", &file1, &file2))
+		return NULL;
+
+	ph_compare_images(file1, file2, pcc, 3.5, 1.0, 180, 0.90);
+
+	return PyFloat_FromDouble(pcc);
+}
+
+static PyObject *
 phash_imagehash(PyObject *self, PyObject *args) {
 	const char *filename;
 	ulong64 hash = 0;
@@ -75,6 +145,22 @@ phash_imagehash(PyObject *self, PyObject *args) {
 		return NULL;
 	ph_dct_imagehash(filename, hash);
 	return PyLong_FromUnsignedLongLong(hash);
+}
+
+static PyObject *
+phash_mh_imagehash(PyObject *self, PyObject *args) {
+    const char *filename;
+    int N = 0;
+    float alpha = 2.0f;
+    float lvl = 1.0f;
+    uint8_t* hash = 0;
+
+    if(!PyArg_ParseTuple(args, "s", &filename))
+		return NULL;
+
+    hash = ph_mh_imagehash(filename, N, alpha, lvl);
+
+	return PyList_FromUint8Array(hash, N);
 }
 
 static PyObject *
@@ -115,6 +201,36 @@ phash_hamming_distance(PyObject *self, PyObject *args) {
 		return NULL;
 	ret = ph_hamming_distance(hash1, hash2);
 	return Py_BuildValue("i", ret);
+}
+
+static PyObject *
+phash_hamming_distance2(PyObject *self, PyObject *args) {
+    PyObject *pyList1, *pyList2;
+    uint8_t *uiarr1, *uiarr2;
+    
+    int len1, len2;
+    double diff = 0.0;
+    
+    if (!PyArg_ParseTuple(args, "OO", &pyList1, &pyList2))
+        return NULL;
+        
+    len1 = PyList_Size(pyList1);
+    len2 = PyList_Size(pyList2);
+    
+    uiarr1 = arrayFromPyList(pyList1);
+    if (!uiarr1)
+        return NULL;
+
+    uiarr2 = arrayFromPyList(pyList2);
+    if (!uiarr2)
+        return NULL;
+        
+    diff = ph_hammingdistance2(uiarr1, len1, uiarr2, len2);
+    
+    free(uiarr1);
+    free(uiarr2);
+    
+    return PyFloat_FromDouble(diff);
 }
 
 static PyObject *
