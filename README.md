@@ -23,6 +23,12 @@ Radial hash
 > `pHash.Digest phash_image_digest( str file, float sigma, float gamma, int angles=180 )`
 > `int phash_crosscorr( phash.Digest digest1, phash.Digest digest2 )`
 
+Mexican hat wavelet
+> `list pHash.mh_imagehash( str file )`
+> `float pHash.hamming_distance2( list byteList1, list byteList2 )`
+
+Peak of Cross Correlation
+> `float pHash.compare_images( str file1, str file2 )`
 
 ````python
 import pHash
