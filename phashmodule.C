@@ -18,17 +18,18 @@ the output, perceptual hashes are \"close\" to one another if the features are\n
 similar.\n\
 ";
 
+
 /* The functions doc string */
 PyDoc_STRVAR( compare_images__doc__,
 "compare_images(file1,file2,pcc=0.0,sigma=3.5,gamma=1.0,N=180,threshold=0.90) -> int\n\n\
 Compare 2 images given the file names  \n\
 Keyword arguments: \n\
-file1    -- char string of first image file \n\
-file2    -- char string of second image file \n\
-pcc      -- (out) double value for peak of cross correlation (default 0.0)\n\
-sigma    -- double value for deviation of gaussian filter (default 3.5)\n\
-gamma    -- double value for gamma correction of images (default 1.0)\n\
-N        -- int number for number of angles (default 180)\n\
+file1   -- char string of first image file \n\
+file2   -- char string of second image file \n\
+pcc   -- (out) double value for peak of cross correlation (default 0.0)\n\
+sigma   -- double value for deviation of gaussian filter (default 3.5)\n\
+gamma   -- double value for gamma correction of images (default 1.0)\n\
+N       -- int number for number of angles (default 180)\n\
 threshold (default 0.90) \n\
 return   -- int 0 (false) for different image, 1 (true) for same images, less \n\
 than 0 for error \n\
@@ -45,8 +46,8 @@ PyDoc_STRVAR( mh_imagehash__doc__,
 create MH image hash for filename image\n\
 Keyword arguments: \n\
 filename -- string name of image file\n\
-alpha    -- int scale factor for marr wavelet (default=2)\n\
-lvl      -- int level of scale factor (default = 1)\n\
+alpha   -- int scale factor for marr wavelet (default=2)\n\
+lvl   -- int level of scale factor (default = 1)\n\
 return   -- uint8_t array\n\
 ");
 PyDoc_STRVAR( image_digest__doc__,
@@ -54,38 +55,38 @@ PyDoc_STRVAR( image_digest__doc__,
 Compute the image digest given the file name.(radial hash)\n\
 Keyword arguments: \n\
 file     -- string value for file name of input image.\n\
-sigma    -- double value for the deviation for gaussian filter\n\
-gamma    -- double value for gamma correction on the input image.\n\
-N        -- int value for number of angles to consider\n\
+sigma   -- double value for the deviation for gaussian filter\n\
+gamma   -- double value for gamma correction on the input image.\n\
+N       -- int value for number of angles to consider\n\
 return   -- a Digest struct\n\
 ");
 PyDoc_STRVAR( hamming_distance__doc__,
 "hamming_distance(hash1,hash2) -> int\n\n\
 Compute the hamming distance between two hash (dct)\n\
 Keyword arguments: \n\
-hash1    -- The first hash (ulong64)\n\
-hash2    -- The second hash (ulong64)\n\
+hash1   -- The first hash (ulong64)\n\
+hash2   -- The second hash (ulong64)\n\
 return   -- The distance (over 100)\n\
 ");
 PyDoc_STRVAR( hamming_distance2__doc__,
 "hamming_distance2(hashA[], hashB[]) -> double\n\n\
 Compute hamming distance between two byte arrays (Mexican Hat)\n\
 Keyword arguments: \n\
-hashA    -- byte array for first hash\n\
-hashB    -- byte array for second hash\n\
+hashA   -- byte array for first hash\n\
+hashB   -- byte array for second hash\n\
 return   -- double value for normalized hamming distance\n\
 ");
 PyDoc_STRVAR( crosscorr__doc__,
 "crosscorr(x, y, threshold=0.90)\n\n\
 Compute the cross correlation of two series vectors (image_digest)\n\
 Keyword arguments: \n\
-x        -- Digest struct\n\
-y        -- Digest struct\n\
+x       -- Digest struct\n\
+y       -- Digest struct\n\
 threshold-- double value for the threshold value for which 2 images are\n\
 considered the same or different.\n\
 return   -- (ret,pcc)\n\
-ret      -- int value - 1 (true) for same, 0 (false) for different, < 0 for error\n\
-pcc      -- double value the peak of cross correlation\n\
+ret   -- int value - 1 (true) for same, 0 (false) for different, < 0 for error\n\
+pcc   -- double value the peak of cross correlation\n\
 ");
 
 ///--- Globals ---///
@@ -93,8 +94,8 @@ static PyObject *pHashError;
 
 typedef struct pHashDigest {
     PyObject_HEAD
-    PyObject *id;               /* hash id */
-    PyObject *coeffs;           /* the head of the digest integer coefficient array */
+    PyObject *id;              /* hash id */
+    PyObject *coeffs;          /* the head of the digest integer coefficient array */
     int size;
 } pHashDigest;
 
@@ -208,13 +209,13 @@ initpHash(void)
     Py_INCREF(pHashError);
     PyModule_AddObject(m, "error", pHashError);
     /* Digest type */
-    pHashDigestType.tp_name      = "pHash.Digest";
+    pHashDigestType.tp_name   = "pHash.Digest";
     pHashDigestType.tp_basicsize = sizeof(pHashDigest);
-    pHashDigestType.tp_new       = PyType_GenericNew;
+    pHashDigestType.tp_new     = PyType_GenericNew;
     pHashDigestType.tp_methods   = NULL;
     pHashDigestType.tp_members   = pHashDigest_members;
     pHashDigestType.tp_flags     = Py_TPFLAGS_DEFAULT;
-    pHashDigestType.tp_doc       = "A pHash radial digest object";
+    pHashDigestType.tp_doc     = "A pHash radial digest object";
     PyType_Ready(&pHashDigestType);
     Py_INCREF(&pHashDigestType);
     PyModule_AddObject(m, "Digest", (PyObject *)&pHashDigestType);
@@ -227,10 +228,10 @@ phash_compare_images(PyObject *self, PyObject *args, PyObject *keywds)
     static char *kwlist[] = {"file1", "file2", "pcc", "sigma", "gamma", "N", "threshold", NULL};
     const char *file1;
     const char *file2;
-    double pcc       = 0.0;
+    double pcc     = 0.0;
     double sigma     = 3.5;
     double gamma     = 1.0;
-    int N            = 180;
+    int N           = 180;
     double threshold = 0.90;
     /* take the args from the user */
     if(!PyArg_ParseTupleAndKeywords(args, keywds , "ss|dddid", kwlist,
@@ -271,9 +272,9 @@ phash_mh_imagehash(PyObject *self, PyObject *args, PyObject *keywds)
     /* set keywords and default args */
     static char *kwlist[] = {"filename", "alpha", "lvl", NULL};
     const char *filename;
-    int N         = 0;
+    int N        = 0;
     float alpha   = 2.0f;
-    float lvl     = 1.0f;
+    float lvl    = 1.0f;
     uint8_t* hash = 0;
     /* take the args from the user */
     if(!PyArg_ParseTupleAndKeywords(args, keywds , "s|ff", kwlist,
