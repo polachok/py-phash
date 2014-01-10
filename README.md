@@ -12,6 +12,8 @@ python setup.py install
 
 (for python 3 checkout python3 branch)
 
+You may wish to install imagemagick or graphicsmagick for additional file format support.
+
 Usage
 -----
 
