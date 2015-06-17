@@ -305,10 +305,16 @@ phash_image_digest(PyObject *self, PyObject *args, PyObject *keywds)
     /* Check if the file exist and ready for reading */
     if (!file_ready_for_reading(filename)) return NULL;
 
-    i = ph_image_digest(filename, sigma, gamma, dig, N);
-    if (i<0) {
-        PyErr_SetString(pHashError,
-            "Computing the image digest of the given file has failed.");
+    try {
+        i = ph_image_digest(filename, sigma, gamma, dig, N);
+        if (i<0) {
+            PyErr_SetString(pHashError,
+                "Computing the image digest of the given file has failed.");
+            return NULL;
+        }
+    }
+    catch (...) {
+        PyErr_SetString(pHashError, "caught exception");
         return NULL;
     }
     phdig = (pHashDigest *)PyObject_New(pHashDigest, &pHashDigestType);
