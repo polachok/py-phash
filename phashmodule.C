@@ -51,7 +51,7 @@ lvl   -- int level of scale factor (default = 1)\n\
 return   -- uint8_t array\n\
 ");
 PyDoc_STRVAR( image_digest__doc__,
-"image_digest(file, sigma=1.0, gamma=1.0, int N=180) -> pHash.Digest\n\n\
+"image_digest(file, sigma=1.0, gamma=1.0, N=180) -> pHash.Digest\n\n\
 Compute the image digest given the file name.(radial hash)\n\
 Keyword arguments: \n\
 file     -- string value for file name of input image.\n\
