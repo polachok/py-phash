@@ -110,6 +110,11 @@ static PyMemberDef pHashDigest_members[] = {
     {NULL}
 };
 
+void pHashDigest_dealloc(PyObject *self) {
+    PyObject_DelAttrString(self, "coeffs");
+    PyObject_Del(self);
+}
+
 ///--- Foo Prototypes ---///
 static PyObject * PyList_FromUint8Array(uint8_t *array, int len);
 static uint8_t* arrayFromPyList(PyObject* pyList);
@@ -210,6 +215,7 @@ initpHash(void)
     pHashDigestType.tp_name   = "pHash.Digest";
     pHashDigestType.tp_basicsize = sizeof(pHashDigest);
     pHashDigestType.tp_new     = PyType_GenericNew;
+    pHashDigestType.tp_dealloc = pHashDigest_dealloc;
     pHashDigestType.tp_methods   = NULL;
     pHashDigestType.tp_members   = pHashDigest_members;
     pHashDigestType.tp_flags     = Py_TPFLAGS_DEFAULT;
@@ -317,6 +323,9 @@ phash_image_digest(PyObject *self, PyObject *args, PyObject *keywds)
     PyObject *coeffs;
     pHashDigest *phdig;
 
+    dig.id = NULL;
+    dig.coeffs = NULL;
+
     if(!PyArg_ParseTupleAndKeywords(args, keywds,"s|ddi:", kwlist,
         &filename, &sigma, &gamma, &N))
         return NULL;
@@ -344,6 +353,10 @@ phash_image_digest(PyObject *self, PyObject *args, PyObject *keywds)
     }
     phdig->coeffs = coeffs;
     phdig->size   = dig.size;
+
+    free(dig.coeffs);
+    free(dig.id);
+
     return (PyObject *)phdig;
 }
 
