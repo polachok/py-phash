@@ -51,7 +51,7 @@ lvl   -- int level of scale factor (default = 1)\n\
 return   -- uint8_t array\n\
 ");
 PyDoc_STRVAR( image_digest__doc__,
-"image_digest(file, sigma=1.0, gamma=1.0, int N=180) -> pHash.Digest\n\n\
+"image_digest(file, sigma=1.0, gamma=1.0, N=180) -> pHash.Digest\n\n\
 Compute the image digest given the file name.(radial hash)\n\
 Keyword arguments: \n\
 file     -- string value for file name of input image.\n\
@@ -104,16 +104,19 @@ static PyTypeObject pHashDigestType = {
 };
 
 static PyMemberDef pHashDigest_members[] = {
-    {"id", T_STRING, offsetof(pHashDigest, id), 0, "id"},
-    {"coeffs", T_OBJECT, offsetof(pHashDigest, coeffs), 0, "coeffs"},
-    {"size", T_INT, offsetof(pHashDigest, size), 0, "size"},
+    {(char*)"id", T_STRING, offsetof(pHashDigest, id), 0, (char*)"id"},
+    {(char*)"coeffs", T_OBJECT, offsetof(pHashDigest, coeffs), 0, (char*)"coeffs"},
+    {(char*)"size", T_INT, offsetof(pHashDigest, size), 0, (char*)"size"},
     {NULL}
 };
 
+void pHashDigest_dealloc(PyObject *self) {
+    PyObject_DelAttrString(self, "coeffs");
+    PyObject_Del(self);
+}
+
 ///--- Foo Prototypes ---///
 static PyObject * PyList_FromUint8Array(uint8_t *array, int len);
-static PyObject * PyList_FromUint32Array(uint32_t *array, int len);
-static PyObject * PyList_FromDoubleArray(double *array, int len);
 static uint8_t* arrayFromPyList(PyObject* pyList);
 static bool file_ready_for_reading (const char *filename);
 
@@ -205,13 +208,14 @@ initpHash(void)
     PyObject *m = Py_InitModule3("pHash", pHash_methods, module_docstring);
     if (m ==NULL) return;
     /* Error handler */
-    pHashError = PyErr_NewException("pHash.error", NULL, NULL);
+    pHashError = PyErr_NewException((char *)"pHash.error", NULL, NULL);
     Py_INCREF(pHashError);
     PyModule_AddObject(m, "error", pHashError);
     /* Digest type */
     pHashDigestType.tp_name   = "pHash.Digest";
     pHashDigestType.tp_basicsize = sizeof(pHashDigest);
     pHashDigestType.tp_new     = PyType_GenericNew;
+    pHashDigestType.tp_dealloc = pHashDigest_dealloc;
     pHashDigestType.tp_methods   = NULL;
     pHashDigestType.tp_members   = pHashDigest_members;
     pHashDigestType.tp_flags     = Py_TPFLAGS_DEFAULT;
@@ -225,7 +229,16 @@ static PyObject *
 phash_compare_images(PyObject *self, PyObject *args, PyObject *keywds)
 {
     /* set keywords and default args */
-    static char *kwlist[] = {"file1", "file2", "pcc", "sigma", "gamma", "N", "threshold", NULL};
+    static char *kwlist[] = {
+        (char *)"file1",
+        (char *)"file2",
+        (char *)"pcc",
+        (char *)"sigma",
+        (char *)"gamma",
+        (char *)"N",
+        (char *)"threshold",
+        NULL
+    };
     const char *file1;
     const char *file2;
     double pcc     = 0.0;
@@ -270,7 +283,12 @@ static PyObject *
 phash_mh_imagehash(PyObject *self, PyObject *args, PyObject *keywds)
 {
     /* set keywords and default args */
-    static char *kwlist[] = {"filename", "alpha", "lvl", NULL};
+    static char *kwlist[] = {
+        (char *)"filename",
+        (char *)"alpha",
+        (char *)"lvl",
+        NULL
+    };
     const char *filename;
     int N        = 0;
     float alpha   = 2.0f;
@@ -291,13 +309,22 @@ static PyObject *
 phash_image_digest(PyObject *self, PyObject *args, PyObject *keywds)
 {
     /* set keywords and default args */
-    static char *kwlist[] = {"file", "sigma", "gamma", "N", NULL};
+    static char *kwlist[] = {
+        (char *)"file",
+        (char *)"sigma",
+        (char *)"gamma",
+        (char *)"N",
+        NULL
+    };
     const char *filename;
     double sigma=1.0, gamma=1.0;
     Digest dig;
     int N = 180, i;
-    PyObject *coeffs, *coeff;
+    PyObject *coeffs;
     pHashDigest *phdig;
+
+    dig.id = NULL;
+    dig.coeffs = NULL;
 
     if(!PyArg_ParseTupleAndKeywords(args, keywds,"s|ddi:", kwlist,
         &filename, &sigma, &gamma, &N))
@@ -305,10 +332,16 @@ phash_image_digest(PyObject *self, PyObject *args, PyObject *keywds)
     /* Check if the file exist and ready for reading */
     if (!file_ready_for_reading(filename)) return NULL;
 
-    i = ph_image_digest(filename, sigma, gamma, dig, N);
-    if (i<0) {
-        PyErr_SetString(pHashError,
-            "Computing the image digest of the given file has failed.");
+    try {
+        i = ph_image_digest(filename, sigma, gamma, dig, N);
+        if (i<0) {
+            PyErr_SetString(pHashError,
+                "Computing the image digest of the given file has failed.");
+            return NULL;
+        }
+    }
+    catch (...) {
+        PyErr_SetString(pHashError, "caught exception");
         return NULL;
     }
     phdig = (pHashDigest *)PyObject_New(pHashDigest, &pHashDigestType);
@@ -320,6 +353,10 @@ phash_image_digest(PyObject *self, PyObject *args, PyObject *keywds)
     }
     phdig->coeffs = coeffs;
     phdig->size   = dig.size;
+
+    free(dig.coeffs);
+    free(dig.id);
+
     return (PyObject *)phdig;
 }
 
@@ -364,7 +401,12 @@ static PyObject *
 phash_crosscorr(PyObject *self, PyObject *args, PyObject *keywds)
 {
     /* set keywords and default args */
-    static char *kwlist[] = {"x", "y", "threshold", NULL};
+    static char *kwlist[] = {
+        (char *)"x",
+        (char *)"y",
+        (char *)"threshold",
+        NULL
+    };
     int ret, size, i;
     double pcc, threshold = 0.90;
     PyObject *py_Digest1, *py_Digest2;
